@@ -51,8 +51,7 @@ namespace Auto_Mail_Direction
         private void SetDirections(HtmlDocument doc) {
             HtmlElementCollection collection = doc.Body.All;
             foreach (HtmlElement elem in collection) {
-                if (("html body div p span header table td tr a".Contains(elem.TagName.ToLower())) 
-                    && elem.InnerText != null && elem.InnerText.Length > 2) {
+                if (elem.InnerText != null && elem.InnerText.Length > 2) {
                     char[] text = elem.InnerText.ToArray();
                     int engCount = 0;
                     int hebCount = 0;
@@ -67,16 +66,33 @@ namespace Auto_Mail_Direction
                     {
                         if (1.1 * engCount >= hebCount && GetDirection(elem) != "ltr")
                         {
-                            elem.SetAttribute("dir", "ltr");
+                            SetDirection(doc, elem, "ltr");
                         }
                         else if (1.1 * engCount < hebCount && GetDirection(elem) != "rtl")
                         {
-                            elem.SetAttribute("dir", "rtl");
+                            SetDirection(doc, elem, "rtl");
                         }
                     }
                 }
             }
 
+        }
+
+        private void SetDirection(HtmlDocument doc, HtmlElement elem, string dir) {
+            if (IsDirectionable(elem.TagName.ToLower()))
+            {
+                elem.SetAttribute("dir", dir);
+            }
+            else {
+                HtmlElement wrapper = doc.CreateElement("DIV");
+                wrapper.SetAttribute("dir", dir);
+                wrapper.InnerHtml = elem.OuterHtml;
+                elem.OuterHtml = wrapper.OuterHtml;
+            }
+        }
+
+        private bool IsDirectionable(string tagName) {
+            return "html body div p span header table td tr a".Contains(tagName);
         }
 
         private string GetDirection(HtmlElement elem) {
